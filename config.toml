@@ -1,0 +1,31 @@
+[plugin]
+enabled = true
+config_version = "1.0.0"
+llm_model = "planner"
+
+[whitelist]
+target_qq = 123456789
+
+[schedule]
+generate_hour = 3
+check_interval_minutes = 10
+daily_max_speak = 5
+user_cooldown_minutes = 30
+proactive_trigger_enabled = true
+
+[probability]
+default_speak_rate = 0.6
+miss_speak_rate = 0.5
+activity_trigger_rate = 0.6
+
+[time_windows]
+morning_start = "06:00"
+morning_end = "09:00"
+night_start = "22:00"
+night_end = "23:59"
+miss_trigger_hours = 6
+silence_start = "00:00"
+silence_end = "08:00"
+
+[affection]
+current_level = 0

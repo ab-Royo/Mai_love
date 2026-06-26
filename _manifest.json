@@ -1,0 +1,42 @@
+{
+  "manifest_version": 2,
+  "id": "maibot-community.mai-lover",
+  "name": "麦麦恋人",
+  "version": "2.0.0",
+  "description": "私聊专用虚拟恋人插件，会主动找你聊天。基于麦麦的独立日程生活，通过 planner 自主决策什么时候说话、说什么，配合好感度系统调节语气温度",
+  "author": {
+    "name": "octmicy",
+    "url": "https://github.com/octmicy"
+  },
+  "license": "GPL-v3.0-or-later",
+  "urls": {
+    "repository": "https://github.com/Mai-with-u/MaiBot",
+    "homepage": "https://github.com/Mai-with-u/MaiBot",
+    "documentation": "https://docs.mai-mai.org"
+  },
+  "host_application": {
+    "min_version": "1.0.0",
+    "max_version": "1.99.99"
+  },
+  "sdk": {
+    "min_version": "2.5.0",
+    "max_version": "2.99.99"
+  },
+  "dependencies": [],
+  "plugin_type": "tool",
+  "capabilities": [
+    "send.text",
+    "chat.get_stream_by_user_id",
+    "chat.get_private_streams",
+    "llm.generate",
+    "maisaka.proactive.trigger",
+    "config.get"
+  ],
+  "i18n": {
+    "default_locale": "zh-CN",
+    "supported_locales": [
+      "zh-CN",
+      "en-US"
+    ]
+  }
+}
