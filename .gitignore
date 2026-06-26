@@ -5,8 +5,7 @@ __pycache__/
 *.so
 
 # 运行时生成的数据文件（首次启动自动创建）
-affection_memory.json
-schedule_cache.json
+data/
 
 # IDE
 .vscode/

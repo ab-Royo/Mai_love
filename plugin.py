@@ -67,22 +67,22 @@ class MaiLoverPlugin(MaiBotPlugin):
 
     async def on_load(self) -> None:
         """初始化插件：创建所有子模块，缓存人设，启动调度器。"""
-        plugin_dir = self._get_plugin_dir()
-        self.ctx.logger.info(f"MaiLover 插件目录: {plugin_dir}")
-        os.makedirs(plugin_dir, exist_ok=True)
+        data_dir = self._get_data_dir()
+        self.ctx.logger.info(f"MaiLover 数据目录: {data_dir}")
+        os.makedirs(data_dir, exist_ok=True)
 
         if not self.config.plugin.enabled:
             self.ctx.logger.info("MaiLover 插件已禁用（plugin.enabled=false），跳过初始化")
             return
 
-        self._affection_mgr = AffectionManager(plugin_dir)
+        self._affection_mgr = AffectionManager(data_dir)
         self._affection_mgr.update_level(self.config.affection.current_level)
         self._memory_mgr = MemoryManager(self._affection_mgr)
         self._llm_svc = LLMService(self.ctx, self.config)
         self._message_svc = MessageService(self.ctx, self.config, self._affection_mgr)
         self._holiday_svc = HolidayService(self.config)
         self._schedule_gen = ScheduleGenerator(
-            plugin_dir, self.config, self._llm_svc, self._holiday_svc
+            data_dir, self.config, self._llm_svc, self._holiday_svc
         )
 
         # 读取主程序人格配置并缓存
@@ -594,15 +594,16 @@ class MaiLoverPlugin(MaiBotPlugin):
             return False
         return stream_id == self._cached_stream_id
 
-    def _get_plugin_dir(self) -> str:
+    def _get_data_dir(self) -> str:
         """获取插件数据目录路径。
 
-        ctx 没有插件目录属性，直接使用当前文件所在目录。
+        数据写入插件目录下的 data/ 子目录，避免插件更新（git pull）时
+        覆盖用户运行时数据（affection_memory.json、schedule_cache.json）。
 
         Returns:
             数据目录绝对路径。
         """
-        return os.path.dirname(os.path.abspath(__file__))
+        return os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
     async def _resolve_stream_id(self, target_qq: str) -> str:
         """获取目标 QQ 的私聊 stream_id（纯 SDK 路径）。

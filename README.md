@@ -215,8 +215,7 @@ mai_lover/
 ├── schedule_generator.py  # 日程生成 + 活动查询
 ├── scheduler.py           # 调度引擎（触发 planner）
 ├── mai_template.json      # 麦麦作息骨架
-├── schedule_cache.json    # 当日日程缓存（自动生成）
-├── affection_memory.json  # 好感度数据（自动生成）
+├── data/                  # 运行时数据目录（好感度/日程缓存，自动生成）
 ├── tests/                 # 测试
 │   ├── test_refactor.py
 │   ├── test_cmd_fix.py
@@ -286,4 +285,4 @@ A: 你问"在干嘛"时，MaiBot 的 planner 会自主决定调用 `mai_lover_cu
 
 ## 许可证
 
-GPL-v3.0-or-later
+MIT
