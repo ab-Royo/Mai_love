@@ -87,18 +87,11 @@ class Scheduler:
     async def start(self) -> None:
         """启动调度引擎。
 
-        创建两个后台异步任务：
-        1. _daily_generation_loop: 每日凌晨生成日程
-        2. _patrol_loop: 按配置间隔巡检
-
-        如果今日日程缓存不存在，则立即生成一次（覆盖首次安装场景）。
+        日程生成循环不依赖 stream_id，始终启动。
+        巡检循环需要 stream_id 才能触发 proactive trigger，无 stream_id 时跳过。
         """
-        if not self._target_qq:
-            self._ctx.logger.error("Scheduler 启动失败: 未设置 target_qq")
-            return
-
         self._stop_event.clear()  # 重置停止标志，支持 stop() 后重新 start()
-        self._ctx.logger.info(f"Scheduler 启动，目标用户: {self._target_qq}")
+        self._ctx.logger.info(f"Scheduler 启动，目标用户: {self._target_qq or '(未设置)'}")
 
         # 首次启动或日程缺失时立即生成今日日程
         now = datetime.now()
@@ -117,9 +110,23 @@ class Scheduler:
         if self._affection.today_date() != today_str:
             self._affection.reset_daily(today_str)
 
-        # 启动后台任务
+        # 日程生成循环始终启动（不依赖 stream_id）
         asyncio.create_task(self._daily_generation_loop())
+
+        # 巡检循环需要 stream_id
+        if self._stream_id:
+            asyncio.create_task(self._patrol_loop())
+            self._ctx.logger.info("巡检循环已启动")
+        else:
+            self._ctx.logger.warning("无 stream_id，巡检循环未启动（日程生成不受影响）")
+
+    async def start_patrol(self) -> None:
+        """单独启动巡检循环（用于 stream_id 延迟获取后补启）。"""
+        if not self._stream_id:
+            self._ctx.logger.warning("无 stream_id，无法启动巡检循环")
+            return
         asyncio.create_task(self._patrol_loop())
+        self._ctx.logger.info("巡检循环已启动（延迟补启）")
 
     async def _daily_generation_loop(self) -> None:
         """每日凌晨唤醒，生成当日日程。

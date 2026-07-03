@@ -15,6 +15,7 @@ v2.0.0 架构变更：
 导出 create_plugin() 函数返回 MaiLoverPlugin 实例。
 """
 
+import asyncio
 import os
 from datetime import datetime
 from typing import Any, ClassVar, Iterable, Optional
@@ -164,6 +165,18 @@ class MaiLoverPlugin(MaiBotPlugin):
         """
         if not self._schedule_gen:
             return {"action": "continue", "modified_kwargs": kwargs}
+
+        # 防护：kwargs 过大时跳过注入（避免触发主程序帧大小限制）
+        try:
+            import json as _json
+            kwargs_size = len(_json.dumps(kwargs, default=str, ensure_ascii=False))
+            if kwargs_size > 1_000_000:  # 1MB
+                self.ctx.logger.warning(
+                    f"planner kwargs 过大 ({kwargs_size} bytes)，跳过活动注入"
+                )
+                return {"action": "continue", "modified_kwargs": kwargs}
+        except Exception:
+            pass
 
         now = datetime.now()
         current_time = now.strftime("%H:%M")
@@ -650,7 +663,11 @@ class MaiLoverPlugin(MaiBotPlugin):
         return ""
 
     async def _start_scheduler(self) -> None:
-        """解析 stream_id 并启动调度器。"""
+        """解析 stream_id 并启动调度器。
+
+        stream_id 解析失败时启动后台重试协程。
+        日程生成循环不依赖 stream_id，始终启动。
+        """
         if self._scheduler is None:
             self.ctx.logger.error("调度器未初始化，无法启动")
             return
@@ -660,15 +677,46 @@ class MaiLoverPlugin(MaiBotPlugin):
             self.ctx.logger.warning("target_qq 未配置，调度器未启动")
             return
 
+        # 先启动 scheduler（日程生成循环不依赖 stream_id）
+        self._scheduler.set_target(target_qq, "")  # stream_id 暂空
+        await self._scheduler.start()
+
+        # 解析 stream_id
         stream_id = await self._resolve_stream_id(target_qq)
         if stream_id:
             self._cached_stream_id = stream_id
             self._scheduler.set_target(target_qq, stream_id)
+            await self._scheduler.start_patrol()
             self.ctx.logger.info(f"目标用户: {target_qq}, stream_id: {stream_id}")
-            await self._scheduler.start()
-            self.ctx.logger.info("调度器已启动")
         else:
-            self.ctx.logger.error("无法获取 stream_id，调度器未启动")
+            self.ctx.logger.warning(
+                f"无法获取 stream_id，日程生成已启动但巡检暂不可用。"
+                f"将在后台每 5 分钟重试解析..."
+            )
+            asyncio.create_task(self._retry_stream_id(target_qq))
+
+    async def _retry_stream_id(self, target_qq: str) -> None:
+        """后台重试解析 stream_id。
+
+        每 5 分钟重试一次，拿到后设置给 scheduler 并启动巡检循环。
+        """
+        while True:
+            try:
+                await asyncio.sleep(300)  # 5 分钟
+                stream_id = await self._resolve_stream_id(target_qq)
+                if stream_id:
+                    self._cached_stream_id = stream_id
+                    if self._scheduler is not None:
+                        self._scheduler.set_target(target_qq, stream_id)
+                        await self._scheduler.start_patrol()
+                    self.ctx.logger.info(f"stream_id 重试成功: {stream_id}，巡检循环已就绪")
+                    return
+                else:
+                    self.ctx.logger.debug("stream_id 重试失败，5 分钟后再次重试")
+            except asyncio.CancelledError:
+                return
+            except Exception as e:
+                self.ctx.logger.error(f"stream_id 重试异常: {e}")
 
 
 def create_plugin() -> MaiBotPlugin:
