@@ -54,6 +54,9 @@ class Scheduler:
         self._stream_id: str = ""
         self._personality: str = ""
         self._last_trigger_time: Optional[datetime] = None
+        self._generation_in_progress: bool = False
+        self._daily_loop_task: Optional[asyncio.Task[Any]] = None
+        self._patrol_loop_task: Optional[asyncio.Task[Any]] = None
 
     def set_target(self, target_qq: str, stream_id: str) -> None:
         """设置白名单目标用户。
@@ -89,33 +92,48 @@ class Scheduler:
 
         日程生成循环不依赖 stream_id，始终启动。
         巡检循环需要 stream_id 才能触发 proactive trigger，无 stream_id 时跳过。
+
+        防重复生成机制（三层防护）：
+        1. 内存级 _generation_in_progress 标记 — 阻止同进程并发生成
+        2. 日期标记文件 .schedule_generated — 跨重启快速判断
+        3. schedule_cache.json 回退检查 — 兼容旧数据
         """
         self._stop_event.clear()  # 重置停止标志，支持 stop() 后重新 start()
         self._ctx.logger.info(f"Scheduler 启动，目标用户: {self._target_qq or '(未设置)'}")
 
-        # 首次启动或日程缺失时立即生成今日日程
+        # 取消旧的后台任务（防止 stop/start 快速切换时残留重复任务）
+        self._cancel_loop_tasks()
+
         now = datetime.now()
         today_str = now.strftime("%Y-%m-%d")
-        cached = self._schedule_gen.load_cached_schedule(today_str)
-        if not cached:
+
+        # 三层检查：内存标记 → 日期标记文件 → 缓存 JSON
+        if self._generation_in_progress:
+            self._ctx.logger.info("日程生成正在进行中（由另一个 start 调用触发），跳过重复生成")
+        elif self._schedule_gen.is_generated_today(today_str):
+            self._ctx.logger.debug(f"{today_str} 日程已生成（标记文件或缓存命中），跳过生成")
+        else:
             self._ctx.logger.info("今日无日程缓存，立即生成")
+            self._generation_in_progress = True
             try:
                 await self._schedule_gen.generate_daily_schedule(
                     today_str, self._personality
                 )
             except Exception as e:
                 self._ctx.logger.error(f"立即生成日程失败: {e}")
+            finally:
+                self._generation_in_progress = False
 
         # 检查是否需要重置每日计数（复用 now）
         if self._affection.today_date() != today_str:
             self._affection.reset_daily(today_str)
 
         # 日程生成循环始终启动（不依赖 stream_id）
-        asyncio.create_task(self._daily_generation_loop())
+        self._daily_loop_task = asyncio.create_task(self._daily_generation_loop())
 
         # 巡检循环需要 stream_id
         if self._stream_id:
-            asyncio.create_task(self._patrol_loop())
+            self._patrol_loop_task = asyncio.create_task(self._patrol_loop())
             self._ctx.logger.info("巡检循环已启动")
         else:
             self._ctx.logger.warning("无 stream_id，巡检循环未启动（日程生成不受影响）")
@@ -125,7 +143,10 @@ class Scheduler:
         if not self._stream_id:
             self._ctx.logger.warning("无 stream_id，无法启动巡检循环")
             return
-        asyncio.create_task(self._patrol_loop())
+        # 取消旧的巡检任务（如有）
+        if self._patrol_loop_task is not None and not self._patrol_loop_task.done():
+            self._patrol_loop_task.cancel()
+        self._patrol_loop_task = asyncio.create_task(self._patrol_loop())
         self._ctx.logger.info("巡检循环已启动（延迟补启）")
 
     async def _daily_generation_loop(self) -> None:
@@ -484,3 +505,20 @@ class Scheduler:
         """停止所有协程。"""
         self._ctx.logger.info("Scheduler 收到停止信号")
         self._stop_event.set()
+        self._cancel_loop_tasks()
+
+    def _cancel_loop_tasks(self) -> None:
+        """取消并清理旧的后台循环任务。
+
+        在 start() 时调用，防止 stop/start 快速切换导致残留的
+        旧 _daily_generation_loop / _patrol_loop 任务继续运行。
+        """
+        for task_attr, label in (
+            ("_daily_loop_task", "日程生成循环"),
+            ("_patrol_loop_task", "巡检循环"),
+        ):
+            task: Optional[asyncio.Task[Any]] = getattr(self, task_attr, None)
+            if task is not None and not task.done():
+                task.cancel()
+                self._ctx.logger.debug(f"已取消旧的{label}任务")
+            setattr(self, task_attr, None)

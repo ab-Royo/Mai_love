@@ -14,6 +14,8 @@ v2.0.0 变更：
 """
 
 import json
+import os
+import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
@@ -48,6 +50,8 @@ class ScheduleGenerator:
             holiday_service: 节假日服务。
         """
         self._cache_file: Path = Path(data_dir) / "schedule_cache.json"
+        # 日期标记文件：记录最近一次成功生成日程的日期，比解析 JSON 缓存更可靠
+        self._generated_marker: Path = Path(data_dir) / ".schedule_generated"
         # 模板文件在插件根目录（与当前模块同级），不受 data_dir 嵌套影响
         self._template_file: Path = Path(__file__).parent / "mai_template.json"
         self._config: MaiLoverPluginSettings = config
@@ -96,6 +100,10 @@ class ScheduleGenerator:
         # 5. 缓存到文件
         self._save_cache(date, nodes)
 
+        # 6. 写入日期标记（缓存写入成功后才标记，作为快速判断依据）
+        if nodes:
+            self._mark_generated(date)
+
         return nodes
 
     def load_cached_schedule(self, date: str) -> list[dict[str, Any]]:
@@ -119,6 +127,63 @@ class ScheduleGenerator:
         except (json.JSONDecodeError, IOError):
             pass
         return []
+
+    def is_generated_today(self, date: str) -> bool:
+        """快速检查当天日程是否已成功生成。
+
+        优先读取轻量的日期标记文件（.schedule_generated），
+        未命中时回退检查 schedule_cache.json 的 date 字段。
+
+        这种两层检查比单独依赖 JSON 缓存更可靠：
+        - 标记文件写入是原子操作（先写临时文件再 os.replace）
+        - 缓存 JSON 被意外损坏时标记文件仍可正常工作
+
+        Args:
+            date: 日期字符串（YYYY-MM-DD）。
+
+        Returns:
+            True 表示当天日程已生成。
+        """
+        # 第一层：日期标记文件（快速、可靠）
+        if self._generated_marker.exists():
+            try:
+                marker_date = self._generated_marker.read_text(encoding="utf-8").strip()
+                if marker_date == date:
+                    return True
+            except (IOError, OSError):
+                pass
+
+        # 第二层：回退检查缓存 JSON
+        cached = self.load_cached_schedule(date)
+        if cached:
+            # 缓存有效但标记文件缺失 → 补写标记文件
+            self._mark_generated(date)
+            return True
+
+        return False
+
+    def _mark_generated(self, date: str) -> None:
+        """写入日期标记文件（原子操作）。
+
+        先写入同目录下的临时文件，再通过 os.replace 原子重命名，
+        确保标记文件永远不会处于半写入状态。
+
+        Args:
+            date: 日期字符串（YYYY-MM-DD）。
+        """
+        try:
+            self._generated_marker.parent.mkdir(parents=True, exist_ok=True)
+            tmp_fd, tmp_path = tempfile.mkstemp(
+                suffix=".tmp", prefix=".schedule_generated.",
+                dir=str(self._generated_marker.parent),
+            )
+            try:
+                os.write(tmp_fd, date.encode("utf-8"))
+            finally:
+                os.close(tmp_fd)
+            os.replace(tmp_path, str(self._generated_marker))
+        except (IOError, OSError):
+            pass
 
     def get_current_activity(self, now: datetime) -> str:
         """查找当前时间点麦麦正在做的活动。
@@ -179,7 +244,10 @@ class ScheduleGenerator:
             return "{}"
 
     def _save_cache(self, date: str, nodes: list[dict[str, Any]]) -> None:
-        """保存日程到缓存文件。
+        """原子写入日程缓存文件。
+
+        先写入临时文件，再通过 os.replace 原子重命名，
+        防止读写并发或进程崩溃导致的半截文件。
 
         Args:
             date: 日期字符串。
@@ -187,11 +255,19 @@ class ScheduleGenerator:
         """
         try:
             self._cache_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(self._cache_file, "w", encoding="utf-8") as f:
-                json.dump(
-                    {"date": date, "nodes": nodes}, f, ensure_ascii=False, indent=2
-                )
-        except IOError:
+            content = json.dumps(
+                {"date": date, "nodes": nodes}, ensure_ascii=False, indent=2
+            )
+            tmp_fd, tmp_path = tempfile.mkstemp(
+                suffix=".tmp", prefix="schedule_cache.",
+                dir=str(self._cache_file.parent),
+            )
+            try:
+                os.write(tmp_fd, content.encode("utf-8"))
+            finally:
+                os.close(tmp_fd)
+            os.replace(tmp_path, str(self._cache_file))
+        except (IOError, OSError):
             pass
 
     def _build_fallback_schedule(self, date: str) -> list[dict[str, Any]]:
