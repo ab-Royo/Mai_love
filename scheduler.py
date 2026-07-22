@@ -382,10 +382,17 @@ class Scheduler:
             True 表示在冷却期内。
         """
         cooldown_minutes = self._config.schedule.user_cooldown_minutes
-        last_speak = self._affection.last_speak_time()
-        if last_speak is None:
+        recent_times = [
+            value
+            for value in (
+                self._affection.last_speak_time(),
+                self._affection.last_user_msg_time(),
+            )
+            if value is not None
+        ]
+        if not recent_times:
             return False
-        elapsed = (now - last_speak).total_seconds() / 60
+        elapsed = (now - max(recent_times)).total_seconds() / 60
         return elapsed < cooldown_minutes
 
     @staticmethod
@@ -404,12 +411,22 @@ class Scheduler:
         Returns:
             True 表示在窗口内。
         """
-        if window_start <= window_end:
-            # 同日窗口
-            return window_start <= current <= window_end
-        else:
-            # 跨日窗口
-            return current >= window_start or current <= window_end
+        try:
+            start_minutes = Scheduler._time_to_minutes(window_start)
+            end_minutes = Scheduler._time_to_minutes(window_end)
+            current_minutes = Scheduler._time_to_minutes(current)
+        except ValueError:
+            return False
+
+        if start_minutes <= end_minutes:
+            return start_minutes <= current_minutes <= end_minutes
+        return current_minutes >= start_minutes or current_minutes <= end_minutes
+
+    @staticmethod
+    def _time_to_minutes(value: str) -> int:
+        """将 H:MM/HH:MM 转为当日分钟数，避免字符串比较误判。"""
+        parsed = datetime.strptime(value, "%H:%M")
+        return parsed.hour * 60 + parsed.minute
 
     @staticmethod
     def _time_match(node_time: str, current: str) -> bool:

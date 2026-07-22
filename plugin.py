@@ -21,7 +21,7 @@ from datetime import datetime
 from typing import Any, ClassVar, Iterable, Optional
 
 from maibot_sdk import API, Command, HookHandler, MaiBotPlugin, Tool
-from maibot_sdk.types import HookMode
+from maibot_sdk.types import ErrorPolicy, HookMode, HookOrder
 
 from .affection_manager import AffectionManager
 from .config import MaiLoverPluginSettings
@@ -63,6 +63,7 @@ class MaiLoverPlugin(MaiBotPlugin):
         self._scheduler: Optional[Scheduler] = None
         self._cached_stream_id: str = ""
         self._cached_personality: str = ""
+        self._stream_retry_task: Optional[asyncio.Task[Any]] = None
 
     # ── Lifecycle ──────────────────────────────────────────────────────
 
@@ -109,6 +110,9 @@ class MaiLoverPlugin(MaiBotPlugin):
             self._affection_mgr.flush()
         if self._scheduler is not None:
             self._scheduler.stop()
+        if self._stream_retry_task is not None:
+            self._stream_retry_task.cancel()
+            self._stream_retry_task = None
         self.ctx.logger.info("MaiLover 插件已卸载")
 
     async def on_config_update(
@@ -120,6 +124,13 @@ class MaiLoverPlugin(MaiBotPlugin):
         scope="bot" 时额外刷新人设缓存（主程序人格配置变更）。
         """
         self.ctx.logger.info(f"配置热更新: scope={scope}, version={version}")
+
+        if scope == "bot":
+            await self._refresh_personality()
+            if self._scheduler is not None:
+                self._scheduler.set_personality(self._cached_personality)
+            self.ctx.logger.info("主程序人设已同步，无需重启 MaiLover 调度器")
+            return None
 
         if not self.config.plugin.enabled:
             if self._scheduler is not None:
@@ -153,6 +164,39 @@ class MaiLoverPlugin(MaiBotPlugin):
         return None
 
     # ── HookHandler ────────────────────────────────────────────────────
+
+    @HookHandler(
+        "chat.receive.after_process",
+        name="mai_lover_target_private_message_observer",
+        description="记录白名单用户的私聊时间，供主动聊天冷却和想念机制使用",
+        mode=HookMode.OBSERVE,
+        order=HookOrder.LATE,
+        timeout_ms=1000,
+        error_policy=ErrorPolicy.SKIP,
+    )
+    async def on_target_private_message(
+        self, message: dict[str, Any] | None = None, **kwargs: Any
+    ) -> None:
+        """记录目标用户的入站私聊；群聊和其他用户不影响恋人调度。"""
+        del kwargs
+        if not self._affection_mgr or not self._is_target_private_message(message):
+            return
+
+        self._affection_mgr.update_last_user_msg_time(datetime.now())
+        self.ctx.logger.debug("已更新目标用户最后私聊时间")
+
+    def _is_target_private_message(self, message: Any) -> bool:
+        if not isinstance(message, dict) or message.get("is_notify"):
+            return False
+        message_info = message.get("message_info")
+        if not isinstance(message_info, dict) or message_info.get("group_info"):
+            return False
+        user_info = message_info.get("user_info")
+        if not isinstance(user_info, dict):
+            return False
+        user_id = str(user_info.get("user_id", "")).strip()
+        target_qq = str(self.config.whitelist.target_qq).strip()
+        return bool(user_id and target_qq and user_id == target_qq)
 
     @HookHandler("maisaka.planner.before_request")
     async def on_planner_before_request(self, **kwargs: Any) -> dict[str, Any]:
@@ -672,6 +716,10 @@ class MaiLoverPlugin(MaiBotPlugin):
             self.ctx.logger.error("调度器未初始化，无法启动")
             return
 
+        if self._stream_retry_task is not None:
+            self._stream_retry_task.cancel()
+            self._stream_retry_task = None
+
         target_qq = str(self.config.whitelist.target_qq)
         if not target_qq or target_qq == "123456789":
             self.ctx.logger.warning("target_qq 未配置，调度器未启动")
@@ -691,18 +739,23 @@ class MaiLoverPlugin(MaiBotPlugin):
         else:
             self.ctx.logger.warning(
                 f"无法获取 stream_id，日程生成已启动但巡检暂不可用。"
-                f"将在后台每 5 分钟重试解析..."
+                f"将在后台快速重试解析..."
             )
-            asyncio.create_task(self._retry_stream_id(target_qq))
+            self._stream_retry_task = asyncio.create_task(
+                self._retry_stream_id(target_qq)
+            )
 
     async def _retry_stream_id(self, target_qq: str) -> None:
         """后台重试解析 stream_id。
 
-        每 5 分钟重试一次，拿到后设置给 scheduler 并启动巡检循环。
+        启动阶段使用短退避重试，避免每次重启后固定失效 5 分钟。
         """
+        retry_delays = (5, 10, 20, 30, 60)
+        attempt = 0
         while True:
             try:
-                await asyncio.sleep(300)  # 5 分钟
+                delay = retry_delays[min(attempt, len(retry_delays) - 1)]
+                await asyncio.sleep(delay)
                 stream_id = await self._resolve_stream_id(target_qq)
                 if stream_id:
                     self._cached_stream_id = stream_id
@@ -710,9 +763,13 @@ class MaiLoverPlugin(MaiBotPlugin):
                         self._scheduler.set_target(target_qq, stream_id)
                         await self._scheduler.start_patrol()
                     self.ctx.logger.info(f"stream_id 重试成功: {stream_id}，巡检循环已就绪")
+                    self._stream_retry_task = None
                     return
                 else:
-                    self.ctx.logger.debug("stream_id 重试失败，5 分钟后再次重试")
+                    attempt += 1
+                    self.ctx.logger.debug(
+                        f"stream_id 重试失败，{retry_delays[min(attempt, len(retry_delays) - 1)]} 秒后再次重试"
+                    )
             except asyncio.CancelledError:
                 return
             except Exception as e:

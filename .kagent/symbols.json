@@ -1,0 +1,233 @@
+{
+  "symbols": {
+    "Mai_love-2563baf815f452f67b440169e9ffa220282fac49/.gitignore": {
+      "ipo_ts": 1784678196556,
+      "edit_count": 1,
+      "last_lines": 18,
+      "last_ts": 1784678196556,
+      "delisted": true,
+      "last_source": "onEdit",
+      "last_content_hash": "1c290e15",
+      "delisted_at": 1784678646299,
+      "delist_rounds": 0
+    },
+    "Mai_love-2563baf815f452f67b440169e9ffa220282fac49/LICENSE": {
+      "ipo_ts": 1784678196560,
+      "edit_count": 1,
+      "last_lines": 21,
+      "last_ts": 1784678196560,
+      "delisted": true,
+      "last_source": "onEdit",
+      "last_content_hash": "4e304ca2",
+      "delisted_at": 1784678646299,
+      "delist_rounds": 0
+    },
+    "Mai_love-2563baf815f452f67b440169e9ffa220282fac49/README.md": {
+      "ipo_ts": 1784678196563,
+      "edit_count": 1,
+      "last_lines": 288,
+      "last_ts": 1784678196563,
+      "delisted": true,
+      "last_source": "onEdit",
+      "last_content_hash": "db2fe711",
+      "delisted_at": 1784678646299,
+      "delist_rounds": 0
+    },
+    "Mai_love-2563baf815f452f67b440169e9ffa220282fac49/__init__.py": {
+      "ipo_ts": 1784678196566,
+      "edit_count": 1,
+      "last_lines": 4,
+      "last_ts": 1784678196566,
+      "delisted": true,
+      "last_source": "onEdit",
+      "last_content_hash": "5760a40c",
+      "delisted_at": 1784678646299,
+      "delist_rounds": 0
+    },
+    "Mai_love-2563baf815f452f67b440169e9ffa220282fac49/_manifest.json": {
+      "ipo_ts": 1784678196568,
+      "edit_count": 1,
+      "last_lines": 42,
+      "last_ts": 1784678196568,
+      "delisted": true,
+      "last_source": "onEdit",
+      "last_content_hash": "c5c0ec50",
+      "delisted_at": 1784678646299,
+      "delist_rounds": 0
+    },
+    "Mai_love-2563baf815f452f67b440169e9ffa220282fac49/affection_manager.py": {
+      "ipo_ts": 1784678196570,
+      "edit_count": 1,
+      "last_lines": 271,
+      "last_ts": 1784678196570,
+      "delisted": true,
+      "last_source": "onEdit",
+      "last_content_hash": "f22b641",
+      "delisted_at": 1784678646299,
+      "delist_rounds": 0
+    },
+    "Mai_love-2563baf815f452f67b440169e9ffa220282fac49/config.py": {
+      "ipo_ts": 1784678196572,
+      "edit_count": 1,
+      "last_lines": 519,
+      "last_ts": 1784678196572,
+      "delisted": true,
+      "last_source": "onEdit",
+      "last_content_hash": "c28568a9",
+      "delisted_at": 1784678646299,
+      "delist_rounds": 0
+    },
+    "Mai_love-2563baf815f452f67b440169e9ffa220282fac49/config.toml": {
+      "ipo_ts": 1784678196574,
+      "edit_count": 1,
+      "last_lines": 31,
+      "last_ts": 1784678196574,
+      "delisted": true,
+      "last_source": "onEdit",
+      "last_content_hash": "4fe28f44",
+      "delisted_at": 1784678646299,
+      "delist_rounds": 0
+    },
+    "Mai_love-2563baf815f452f67b440169e9ffa220282fac49/constants.py": {
+      "ipo_ts": 1784678196576,
+      "edit_count": 1,
+      "last_lines": 54,
+      "last_ts": 1784678196576,
+      "delisted": true,
+      "last_source": "onEdit",
+      "last_content_hash": "4dba3564",
+      "delisted_at": 1784678646299,
+      "delist_rounds": 0
+    },
+    "Mai_love-2563baf815f452f67b440169e9ffa220282fac49/holiday_service.py": {
+      "ipo_ts": 1784678196577,
+      "edit_count": 1,
+      "last_lines": 110,
+      "last_ts": 1784678196577,
+      "delisted": true,
+      "last_source": "onEdit",
+      "last_content_hash": "b6fb2632",
+      "delisted_at": 1784678646299,
+      "delist_rounds": 0
+    },
+    "Mai_love-2563baf815f452f67b440169e9ffa220282fac49/llm_service.py": {
+      "ipo_ts": 1784678196579,
+      "edit_count": 1,
+      "last_lines": 201,
+      "last_ts": 1784678196579,
+      "delisted": true,
+      "last_source": "onEdit",
+      "last_content_hash": "a1bc0e65",
+      "delisted_at": 1784678646299,
+      "delist_rounds": 0
+    },
+    "Mai_love-2563baf815f452f67b440169e9ffa220282fac49/mai_template.json": {
+      "ipo_ts": 1784678196582,
+      "edit_count": 1,
+      "last_lines": 23,
+      "last_ts": 1784678196582,
+      "delisted": true,
+      "last_source": "onEdit",
+      "last_content_hash": "63364e43",
+      "delisted_at": 1784678646299,
+      "delist_rounds": 0
+    },
+    "Mai_love-2563baf815f452f67b440169e9ffa220282fac49/memory_manager.py": {
+      "ipo_ts": 1784678196585,
+      "edit_count": 1,
+      "last_lines": 73,
+      "last_ts": 1784678196585,
+      "delisted": true,
+      "last_source": "onEdit",
+      "last_content_hash": "2a4de530",
+      "delisted_at": 1784678646299,
+      "delist_rounds": 0
+    },
+    "Mai_love-2563baf815f452f67b440169e9ffa220282fac49/message_service.py": {
+      "ipo_ts": 1784678196587,
+      "edit_count": 1,
+      "last_lines": 127,
+      "last_ts": 1784678196587,
+      "delisted": true,
+      "last_source": "onEdit",
+      "last_content_hash": "f31af898",
+      "delisted_at": 1784678646299,
+      "delist_rounds": 0
+    },
+    "Mai_love-2563baf815f452f67b440169e9ffa220282fac49/plugin.py": {
+      "ipo_ts": 1784678196589,
+      "edit_count": 1,
+      "last_lines": 781,
+      "last_ts": 1784678196589,
+      "delisted": true,
+      "last_source": "onEdit",
+      "last_content_hash": "887013ab",
+      "delisted_at": 1784678646299,
+      "delist_rounds": 0
+    },
+    "Mai_love-2563baf815f452f67b440169e9ffa220282fac49/requirements.txt": {
+      "ipo_ts": 1784678196592,
+      "edit_count": 1,
+      "last_lines": 1,
+      "last_ts": 1784678196592,
+      "delisted": true,
+      "last_source": "onEdit",
+      "last_content_hash": "de308e39",
+      "delisted_at": 1784678646299,
+      "delist_rounds": 0
+    },
+    "Mai_love-2563baf815f452f67b440169e9ffa220282fac49/schedule_generator.py": {
+      "ipo_ts": 1784678196594,
+      "edit_count": 1,
+      "last_lines": 256,
+      "last_ts": 1784678196594,
+      "delisted": true,
+      "last_source": "onEdit",
+      "last_content_hash": "ffb89eb4",
+      "delisted_at": 1784678646299,
+      "delist_rounds": 0
+    },
+    "Mai_love-2563baf815f452f67b440169e9ffa220282fac49/scheduler.py": {
+      "ipo_ts": 1784678196596,
+      "edit_count": 1,
+      "last_lines": 486,
+      "last_ts": 1784678196596,
+      "delisted": true,
+      "last_source": "onEdit",
+      "last_content_hash": "8cf05989",
+      "delisted_at": 1784678646299,
+      "delist_rounds": 0
+    },
+    "Mai_love-2563baf815f452f67b440169e9ffa220282fac49/tests/conftest.py": {
+      "ipo_ts": 1784678196598,
+      "edit_count": 1,
+      "last_lines": 10,
+      "last_ts": 1784678196598,
+      "delisted": true,
+      "last_source": "onEdit",
+      "last_content_hash": "ced70f6f",
+      "delisted_at": 1784678646299,
+      "delist_rounds": 0
+    },
+    "Mai_love-2563baf815f452f67b440169e9ffa220282fac49/tests/test_scheduler_regressions.py": {
+      "ipo_ts": 1784678196600,
+      "edit_count": 1,
+      "last_lines": 45,
+      "last_ts": 1784678196600,
+      "delisted": true,
+      "last_source": "onEdit",
+      "last_content_hash": "3101da68",
+      "delisted_at": 1784678646299,
+      "delist_rounds": 0
+    },
+    ".claude/settings.local.json": {
+      "ipo_ts": 1784678235213,
+      "edit_count": 2,
+      "last_lines": 10,
+      "last_ts": 1784678240255,
+      "delisted": false,
+      "last_source": "onEdit",
+      "last_content_hash": "42db9055"
+    }
+  }
+}
