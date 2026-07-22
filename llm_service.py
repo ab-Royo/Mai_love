@@ -117,6 +117,7 @@ class LLMService:
     async def generate_schedule(
         self,
         date: str,
+        weekday: str,
         holiday_info: str,
         mai_template: str,
         personality: str,
@@ -127,7 +128,8 @@ class LLMService:
         调用 LLM 生成 JSON，解析失败返回空列表。
 
         Args:
-            date: 日期字符串。
+            date: 日期字符串（YYYY-MM-DD）。
+            weekday: 中文星期名称（如"星期五"）。
             holiday_info: 节假日/工作日描述。
             mai_template: 麦麦作息模板格式化文本。
             personality: 麦麦人设性格文本。
@@ -137,6 +139,7 @@ class LLMService:
         """
         prompt = SCHEDULE_GENERATION_PROMPT.format(
             date=date,
+            weekday=weekday,
             holiday_info=holiday_info,
             mai_template=mai_template,
             personality=personality,

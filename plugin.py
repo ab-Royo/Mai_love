@@ -311,9 +311,26 @@ class MaiLoverPlugin(MaiBotPlugin):
             pass
 
         now = datetime.now()
+        date_str = now.strftime("%Y-%m-%d")
         current_time = now.strftime("%H:%M")
         activity = user_ctx.schedule_gen.get_current_activity(now)
-        suffix = f"\n【麦麦当前状态】现在 {current_time}，麦麦正在{activity}。"
+
+        # 构造日期+星期+节假日信息（节假日服务带缓存，当天首次查询后零开销）
+        weekday = HolidayService.get_weekday_name(date_str)
+        try:
+            holiday_info = await self._holiday_svc.get_holiday_info(date_str)
+        except Exception:
+            holiday_info = ""
+
+        parts: list[str] = []
+        if weekday:
+            parts.append(f"【当前日期】今天是 {date_str}（{weekday}）")
+            if holiday_info:
+                parts[-1] += f"，{holiday_info}。"
+            else:
+                parts[-1] += "。"
+        parts.append(f"【麦麦当前状态】现在 {current_time}，麦麦正在{activity}。")
+        suffix = "\n" + "\n".join(parts)
 
         # 追加非覆盖
         kwargs["extra_prompt"] = (kwargs.get("extra_prompt") or "") + suffix

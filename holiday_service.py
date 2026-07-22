@@ -12,13 +12,15 @@ from typing import Optional
 import httpx
 
 from .config import MaiLoverPluginSettings
-from .constants import HOLIDAY_FALLBACK_WEEKDAYS
+from .constants import CHINESE_WEEKDAYS, HOLIDAY_FALLBACK_WEEKDAYS
 
 
 class HolidayService:
     """节假日信息服务。
 
     通过 httpx 异步调用 API 获取节假日信息，带本地降级策略。
+    按日期缓存查询结果，当天首次查询后由日程生成和 Planner 共用，
+    避免每次 Planner 请求都调用外部 API。
     """
 
     # API 地址模板
@@ -38,8 +40,55 @@ class HolidayService:
             config: 插件强类型配置模型。
         """
         self._config: MaiLoverPluginSettings = config
+        self._cache: dict[str, str] = {}
+
+    @staticmethod
+    def get_weekday_name(date: str) -> str:
+        """根据日期返回中文星期名称。
+
+        Args:
+            date: 日期字符串（YYYY-MM-DD）。
+
+        Returns:
+            中文星期名称（如"星期五"），解析失败返回空字符串。
+        """
+        try:
+            dt = datetime.strptime(date, "%Y-%m-%d")
+            return CHINESE_WEEKDAYS.get(dt.weekday(), "")
+        except ValueError:
+            return ""
 
     async def get_holiday_info(self, date: str) -> str:
+        """获取指定日期的节假日/工作日信息（带日期缓存）。
+
+        当天首次查询时调用外部 API，后续直接从内存缓存返回。
+        日程生成（凌晨）触发首次查询后，Planner 后续请求零开销。
+
+        Args:
+            date: 日期字符串（YYYY-MM-DD）。
+
+        Returns:
+            中文描述，如 "工作日" / "周末休息日" / "春节假期"。
+        """
+        if date in self._cache:
+            return self._cache[date]
+
+        result = await self._call_api(date)
+        if result is not None:
+            holiday_type: int = result.get("type", -1)
+            if holiday_type in self.TYPE_MAP:
+                name: str = result.get("name", "")
+                if holiday_type == 2 and name:
+                    info = f"{name}假期"
+                else:
+                    info = self.TYPE_MAP[holiday_type]
+                self._cache[date] = info
+                return info
+
+        # API 失败，本地判断
+        info = self._local_judge(date)
+        self._cache[date] = info
+        return info
         """获取指定日期的节假日/工作日信息。
 
         流程：

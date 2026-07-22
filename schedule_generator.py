@@ -83,11 +83,12 @@ class ScheduleGenerator:
         # 2. 读取麦麦作息模板
         template_text = self._read_template()
 
-        # 3. 调用 LLM 生成日程（传入人设性格）
+        # 3. 调用 LLM 生成日程（传入人设性格和星期）
         nodes: list[dict[str, Any]] = []
+        weekday = self._holiday.get_weekday_name(date)
         try:
             nodes = await self._llm.generate_schedule(
-                date, holiday_info, template_text, personality
+                date, weekday, holiday_info, template_text, personality
             )
         except Exception:
             # LLM 生成异常，将在下一步使用降级骨架
