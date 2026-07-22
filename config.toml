@@ -1,10 +1,13 @@
 [plugin]
 enabled = true
-config_version = "1.0.0"
+config_version = "2.0.0"
 llm_model = "planner"
 
 [whitelist]
-target_qq = 123456789
+# 多用户模式：目标 QQ 号列表（推荐）
+target_qqs = [123456789]
+# 旧字段（已弃用）：单用户目标 QQ。若与 target_qqs 同时设置，会自动合并去重
+# target_qq = 123456789
 
 [schedule]
 generate_hour = 3

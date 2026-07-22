@@ -2,14 +2,19 @@
 
 提供符合 MaiBot PluginConfigBase 规范的配置定义，
 支持 WebUI 表单渲染与多语言说明。
+
+v2.0.0: 新增多用户支持 — target_qqs 列表、PerUserConfigOverride、配置合并工具。
 """
 
 from __future__ import annotations
 
-from typing import Any, ClassVar, Dict, Literal, Optional
+import json
+import os
+from copy import deepcopy
+from typing import Any, ClassVar, Dict, List, Literal, Optional
 
 from maibot_sdk import Field, PluginConfigBase
-from pydantic import field_validator
+from pydantic import BaseModel, field_validator
 
 
 def _schema_i18n(
@@ -42,7 +47,7 @@ def _schema_i18n(
 # 插件总开关
 # ---------------------------------------------------------------------------
 
-CONFIG_SCHEMA_VERSION = "1.0.0"
+CONFIG_SCHEMA_VERSION = "2.0.0"
 
 
 class PluginConfig(PluginConfigBase):
@@ -100,29 +105,62 @@ class PluginConfig(PluginConfigBase):
 
 
 class WhitelistConfig(PluginConfigBase):
-    """绑定唯一的 QQ 号。只有这个号码的私聊消息会触发麦麦的所有主动逻辑。"""
+    """绑定目标 QQ 号（可多个）。只有这些号码的私聊消息会触发麦麦的所有主动逻辑。"""
 
     __ui_label__: ClassVar[str] = "白名单设置"
     __ui_order__: ClassVar[int] = 1
 
-    target_qq: int = Field(
-        default=123456789,
-        description="只有这个号的私聊会激活麦麦的所有功能。填你自己的 QQ 号，修改后需要重启插件。",
+    target_qqs: List[int] = Field(
+        default_factory=list,
+        description="目标 QQ 号列表。支持多个用户，每个用户独立存储数据和配置。修改后需要重启插件。",
         json_schema_extra={
-            "hint": "填你的 QQ 号。只对这一个号生效（私聊），群聊完全不管。改完需要重启插件或 MaiBot。",
+            "hint": "可以填多个 QQ 号。每个号的私聊都会激活麦麦。数据互不干扰。改完需要重启插件或 MaiBot。",
             "i18n": _schema_i18n(
-                label_en="Target QQ Number",
-                label_ja="対象QQ番号",
-                hint_en="MaiMai only talks to this QQ number in private chat. Group chats are unaffected. Restart required after change.",
-                hint_ja="麦麦はこのQQ番号とのプライベートチャットでのみ話します。グループチャットは影響を受けません。変更後は再起動が必要です。",
+                label_en="Target QQ Numbers (List)",
+                label_ja="対象QQ番号（リスト）",
+                hint_en="One or more QQ numbers. Each user gets independent data and config. Restart required after change.",
+                hint_ja="複数のQQ番号を指定可能。各ユーザーは独立したデータと設定を持ちます。変更後は再起動が必要です。",
+                placeholder_en="[123456789, 987654321]",
+                placeholder_ja="[123456789, 987654321]",
+            ),
+            "label": "目标 QQ 号列表",
+            "order": 0,
+            "placeholder": "[123456789]",
+        },
+    )
+    target_qq: int = Field(
+        default=0,
+        description="[已弃用] 单用户目标 QQ。请改用 target_qqs 列表。若同时设置两者，会自动合并去重。",
+        json_schema_extra={
+            "hint": "已弃用，请迁移到「目标 QQ 号列表」。若同时设置，会自动合并去重。",
+            "i18n": _schema_i18n(
+                label_en="Target QQ (Deprecated)",
+                label_ja="対象QQ（非推奨）",
+                hint_en="Deprecated. Please use the QQ number list instead. Values from both fields are merged.",
+                hint_ja="非推奨です。QQ番号リストを使用してください。両方の値は自動的にマージされます。",
                 placeholder_en="123456789",
                 placeholder_ja="123456789",
             ),
-            "label": "目标 QQ 号",
-            "order": 0,
+            "label": "目标 QQ 号（已弃用）",
+            "order": 1,
             "placeholder": "123456789",
         },
     )
+
+    # 过滤器：排除这些默认占位值
+    _INVALID_DEFAULTS: ClassVar[set] = {0, 123456789}
+
+    def get_effective_qqs(self) -> list[int]:
+        """合并 target_qqs 和 target_qq，自动去重和过滤默认值。
+
+        Returns:
+            有效 QQ 号列表（已去重）。
+        """
+        qqs: list[int] = list(self.target_qqs)
+        if self.target_qq and self.target_qq not in self._INVALID_DEFAULTS:
+            if self.target_qq not in qqs:
+                qqs.append(self.target_qq)
+        return [q for q in qqs if q not in self._INVALID_DEFAULTS]
 
     @field_validator("target_qq", mode="before")
     @classmethod
@@ -135,6 +173,32 @@ class WhitelistConfig(PluginConfigBase):
         if isinstance(value, (int, float)):
             return int(value)
         return 0
+
+    @field_validator("target_qqs", mode="before")
+    @classmethod
+    def _normalize_target_qqs(cls, value: Any) -> list[int]:
+        """规范化 target_qqs：支持字符串列表、单个字符串等输入。"""
+        if value is None:
+            return []
+        if isinstance(value, str):
+            try:
+                parsed = json.loads(value)
+                if isinstance(parsed, list):
+                    value = parsed
+            except (json.JSONDecodeError, ValueError):
+                return []
+        if not isinstance(value, list):
+            return []
+        result: list[int] = []
+        for item in value:
+            if isinstance(item, str):
+                try:
+                    result.append(int(item.strip()))
+                except ValueError:
+                    pass
+            elif isinstance(item, (int, float)):
+                result.append(int(item))
+        return result
 
 
 # ---------------------------------------------------------------------------
@@ -498,6 +562,147 @@ class MaiLoverPluginSettings(PluginConfigBase):
     probability: ProbabilityConfig = Field(default_factory=ProbabilityConfig)
     time_windows: TimeWindowsConfig = Field(default_factory=TimeWindowsConfig)
     affection: AffectionConfig = Field(default_factory=AffectionConfig)
+
+
+# ---------------------------------------------------------------------------
+# 用户独立配置覆盖模型（非 WebUI，仅用于文件校验）
+# ---------------------------------------------------------------------------
+
+
+class _PartialScheduleConfig(BaseModel):
+    """ScheduleConfig 的可选部分覆盖。"""
+
+    generate_hour: Optional[int] = None
+    check_interval_minutes: Optional[int] = None
+    daily_max_speak: Optional[int] = None
+    user_cooldown_minutes: Optional[int] = None
+    proactive_trigger_enabled: Optional[bool] = None
+
+
+class _PartialProbabilityConfig(BaseModel):
+    """ProbabilityConfig 的可选部分覆盖。"""
+
+    default_speak_rate: Optional[float] = None
+    miss_speak_rate: Optional[float] = None
+    activity_trigger_rate: Optional[float] = None
+
+
+class _PartialTimeWindowsConfig(BaseModel):
+    """TimeWindowsConfig 的可选部分覆盖。"""
+
+    morning_start: Optional[str] = None
+    morning_end: Optional[str] = None
+    night_start: Optional[str] = None
+    night_end: Optional[str] = None
+    miss_trigger_hours: Optional[int] = None
+    silence_start: Optional[str] = None
+    silence_end: Optional[str] = None
+
+
+class _PartialAffectionConfig(BaseModel):
+    """AffectionConfig 的可选部分覆盖。"""
+
+    current_level: Optional[int] = None
+
+
+class _PartialPluginConfig(BaseModel):
+    """PluginConfig 的可选部分覆盖。"""
+
+    llm_model: Optional[str] = None
+    enabled: Optional[bool] = None
+
+
+class PerUserConfigOverride(BaseModel):
+    """用户独立配置覆盖模型。
+
+    所有字段均为可选，仅为校验 `config_override.json` 的结构。
+    未指定的字段将沿用全局配置。
+    """
+
+    plugin: Optional[_PartialPluginConfig] = None
+    schedule: Optional[_PartialScheduleConfig] = None
+    probability: Optional[_PartialProbabilityConfig] = None
+    time_windows: Optional[_PartialTimeWindowsConfig] = None
+    affection: Optional[_PartialAffectionConfig] = None
+
+
+def load_user_config_overrides(user_data_dir: str) -> dict[str, Any]:
+    """从用户数据目录加载配置覆盖文件。
+
+    Args:
+        user_data_dir: 用户数据目录（如 data/123456789/）。
+
+    Returns:
+        配置覆盖字典。文件不存在或损坏时返回空字典。
+    """
+    override_file = os.path.join(user_data_dir, "config_override.json")
+    if not os.path.isfile(override_file):
+        return {}
+    try:
+        with open(override_file, "r", encoding="utf-8") as f:
+            raw = json.load(f)
+    except (json.JSONDecodeError, IOError):
+        return {}
+
+    if not isinstance(raw, dict):
+        return {}
+
+    # 校验结构（忽略未知/无效字段）
+    try:
+        PerUserConfigOverride(**raw)
+    except Exception:
+        # 校验失败 → 静默降级为全局配置
+        return {}
+
+    # 过滤掉 None 值，确保合并时不覆盖全局配置中的实际值
+    return _strip_none_values(raw)
+
+
+def merge_config_with_overrides(
+    global_config: MaiLoverPluginSettings,
+    overrides: dict[str, Any],
+) -> MaiLoverPluginSettings:
+    """深合并全局配置与用户覆盖，返回新的配置实例。
+
+    合并规则：用户覆盖中非 None 的值优先，其余沿用全局。
+    不对传入的 global_config 做修改（返回全新实例）。
+
+    Args:
+        global_config: 全局插件配置。
+        overrides: load_user_config_overrides() 返回的覆盖字典。
+
+    Returns:
+        合并后的新配置实例。
+    """
+    merged_dict = deepcopy(global_config.model_dump())
+    _deep_merge(merged_dict, overrides)
+    return MaiLoverPluginSettings(**merged_dict)
+
+
+def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> None:
+    """原地深合并 override 到 base 中。"""
+    for key, value in override.items():
+        if (
+            key in base
+            and isinstance(base[key], dict)
+            and isinstance(value, dict)
+        ):
+            _deep_merge(base[key], value)
+        elif value is not None:
+            base[key] = value
+
+
+def _strip_none_values(d: dict[str, Any]) -> dict[str, Any]:
+    """递归移除字典中值为 None 的键。"""
+    result: dict[str, Any] = {}
+    for key, value in d.items():
+        if isinstance(value, dict):
+            stripped = _strip_none_values(value)
+            if stripped:
+                result[key] = stripped
+        elif value is not None:
+            result[key] = value
+    return result
 
 
 # ---------------------------------------------------------------------------

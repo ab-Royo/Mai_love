@@ -48,8 +48,8 @@ class ScheduleGenerator:
             holiday_service: 节假日服务。
         """
         self._cache_file: Path = Path(data_dir) / "schedule_cache.json"
-        # 模板文件在插件根目录（data_dir 的上一级），不是 data/ 子目录
-        self._template_file: Path = Path(data_dir).parent / "mai_template.json"
+        # 模板文件在插件根目录（与当前模块同级），不受 data_dir 嵌套影响
+        self._template_file: Path = Path(__file__).parent / "mai_template.json"
         self._config: MaiLoverPluginSettings = config
         self._llm: LLMService = llm_service
         self._holiday: HolidayService = holiday_service

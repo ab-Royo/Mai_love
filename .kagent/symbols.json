@@ -222,12 +222,12 @@
     },
     ".claude/settings.local.json": {
       "ipo_ts": 1784678235213,
-      "edit_count": 2,
-      "last_lines": 10,
-      "last_ts": 1784678240255,
+      "edit_count": 5,
+      "last_lines": 13,
+      "last_ts": 1784679783123,
       "delisted": false,
       "last_source": "onEdit",
-      "last_content_hash": "42db9055"
+      "last_content_hash": "e58adb01"
     },
     "CLAUDE.md": {
       "ipo_ts": 1784678794253,
@@ -237,6 +237,267 @@
       "delisted": false,
       "last_source": "onEdit",
       "last_content_hash": "17d103bd"
+    },
+    "config.py": {
+      "ipo_ts": 1784679451603,
+      "edit_count": 4,
+      "last_lines": 724,
+      "last_ts": 1784679486518,
+      "delisted": false,
+      "last_source": "onEdit",
+      "last_content_hash": "1c478483"
+    },
+    "schedule_generator.py": {
+      "ipo_ts": 1784679494557,
+      "edit_count": 1,
+      "last_lines": 256,
+      "last_ts": 1784679494557,
+      "delisted": false,
+      "last_source": "onEdit",
+      "last_content_hash": "84f7d237"
+    },
+    "plugin.py": {
+      "ipo_ts": 1784679599627,
+      "edit_count": 1,
+      "last_lines": 1122,
+      "last_ts": 1784679599627,
+      "delisted": false,
+      "last_source": "onEdit",
+      "last_content_hash": "2e3e88cf"
+    },
+    "_manifest.json": {
+      "ipo_ts": 1784679606393,
+      "edit_count": 1,
+      "last_lines": 42,
+      "last_ts": 1784679606393,
+      "delisted": false,
+      "last_source": "onEdit",
+      "last_content_hash": "535f762f"
+    },
+    "config.toml": {
+      "ipo_ts": 1784679608166,
+      "edit_count": 1,
+      "last_lines": 34,
+      "last_ts": 1784679608166,
+      "delisted": false,
+      "last_source": "onEdit",
+      "last_content_hash": "c007e3e6"
+    },
+    "tests/test_user_registry.py": {
+      "ipo_ts": 1784679621258,
+      "edit_count": 1,
+      "last_lines": 96,
+      "last_ts": 1784679621258,
+      "delisted": false,
+      "last_source": "onEdit",
+      "last_content_hash": "b37ac8a5"
+    },
+    "tests/test_config.py": {
+      "ipo_ts": 1784679635656,
+      "edit_count": 1,
+      "last_lines": 160,
+      "last_ts": 1784679635656,
+      "delisted": false,
+      "last_source": "onEdit",
+      "last_content_hash": "3995994a"
+    },
+    "tests/test_migration.py": {
+      "ipo_ts": 1784679646320,
+      "edit_count": 1,
+      "last_lines": 113,
+      "last_ts": 1784679646320,
+      "delisted": false,
+      "last_source": "onEdit",
+      "last_content_hash": "b0c89151"
+    },
+    "tests/test_multi_user_plugin.py": {
+      "ipo_ts": 1784679670037,
+      "edit_count": 1,
+      "last_lines": 221,
+      "last_ts": 1784679670037,
+      "delisted": false,
+      "last_source": "onEdit",
+      "last_content_hash": "5ba298fa"
+    },
+    "tests/__pycache__/conftest.cpython-311-pytest-9.1.1.pyc": {
+      "ipo_ts": 1784679775343,
+      "edit_count": 3,
+      "last_lines": 17,
+      "last_ts": 1784679847648,
+      "delisted": false,
+      "last_source": "onEdit",
+      "last_content_hash": "ce516b94"
+    },
+    "tests/__pycache__/test_config.cpython-311-pytest-9.1.1.pyc": {
+      "ipo_ts": 1784679775639,
+      "edit_count": 1,
+      "last_lines": 149,
+      "last_ts": 1784679775639,
+      "delisted": false,
+      "last_source": "onEdit",
+      "last_content_hash": "be641eb6"
+    },
+    "tests/__pycache__/test_migration.cpython-311-pytest-9.1.1.pyc": {
+      "ipo_ts": 1784679775753,
+      "edit_count": 1,
+      "last_lines": 116,
+      "last_ts": 1784679775753,
+      "delisted": false,
+      "last_source": "onEdit",
+      "last_content_hash": "1a1a0d90"
+    },
+    "tests/__pycache__/test_multi_user_plugin.cpython-311-pytest-9.1.1.pyc": {
+      "ipo_ts": 1784679775758,
+      "edit_count": 1,
+      "last_lines": 175,
+      "last_ts": 1784679775758,
+      "delisted": false,
+      "last_source": "onEdit",
+      "last_content_hash": "bf3f6582"
+    },
+    "tests/__pycache__/test_scheduler_regressions.cpython-311-pytest-9.1.1.pyc": {
+      "ipo_ts": 1784679775761,
+      "edit_count": 1,
+      "last_lines": 36,
+      "last_ts": 1784679775761,
+      "delisted": false,
+      "last_source": "onEdit",
+      "last_content_hash": "19622cea"
+    },
+    "tests/__pycache__/test_user_registry.cpython-311-pytest-9.1.1.pyc": {
+      "ipo_ts": 1784679775768,
+      "edit_count": 1,
+      "last_lines": 104,
+      "last_ts": 1784679775768,
+      "delisted": false,
+      "last_source": "onEdit",
+      "last_content_hash": "4672cedb"
+    },
+    ".pytest_cache/v/cache/lastfailed": {
+      "ipo_ts": 1784679775772,
+      "edit_count": 4,
+      "last_lines": 6,
+      "last_ts": 1784679848174,
+      "delisted": false,
+      "last_source": "onEdit",
+      "last_content_hash": "777e2998"
+    },
+    ".pytest_cache/v/cache/nodeids": {
+      "ipo_ts": 1784679775794,
+      "edit_count": 4,
+      "last_lines": 52,
+      "last_ts": 1784679848178,
+      "delisted": false,
+      "last_source": "onEdit",
+      "last_content_hash": "d454e5bf"
+    },
+    "__pycache__/plugin.cpython-311.pyc": {
+      "ipo_ts": 1784679786187,
+      "edit_count": 1,
+      "last_lines": 411,
+      "last_ts": 1784679786187,
+      "delisted": false,
+      "last_source": "onEdit",
+      "last_content_hash": "6d3a746a"
+    },
+    "__pycache__/__init__.cpython-311.pyc": {
+      "ipo_ts": 1784679811810,
+      "edit_count": 1,
+      "last_lines": 6,
+      "last_ts": 1784679811810,
+      "delisted": false,
+      "last_source": "onEdit",
+      "last_content_hash": "2c21bd"
+    },
+    "__pycache__/affection_manager.cpython-311.pyc": {
+      "ipo_ts": 1784679811814,
+      "edit_count": 1,
+      "last_lines": 171,
+      "last_ts": 1784679811814,
+      "delisted": false,
+      "last_source": "onEdit",
+      "last_content_hash": "fc2e081b"
+    },
+    "__pycache__/config.cpython-311.pyc": {
+      "ipo_ts": 1784679811817,
+      "edit_count": 1,
+      "last_lines": 166,
+      "last_ts": 1784679811817,
+      "delisted": false,
+      "last_source": "onEdit",
+      "last_content_hash": "5d6d516a"
+    },
+    "__pycache__/holiday_service.cpython-311.pyc": {
+      "ipo_ts": 1784679811820,
+      "edit_count": 1,
+      "last_lines": 60,
+      "last_ts": 1784679811820,
+      "delisted": false,
+      "last_source": "onEdit",
+      "last_content_hash": "cc3acb40"
+    },
+    "__pycache__/schedule_generator.cpython-311.pyc": {
+      "ipo_ts": 1784679811824,
+      "edit_count": 1,
+      "last_lines": 133,
+      "last_ts": 1784679811824,
+      "delisted": false,
+      "last_source": "onEdit",
+      "last_content_hash": "513f0719"
+    },
+    "__pycache__/scheduler.cpython-311.pyc": {
+      "ipo_ts": 1784679811827,
+      "edit_count": 1,
+      "last_lines": 205,
+      "last_ts": 1784679811827,
+      "delisted": false,
+      "last_source": "onEdit",
+      "last_content_hash": "e708ded2"
+    },
+    "__pycache__/constants.cpython-311.pyc": {
+      "ipo_ts": 1784679812040,
+      "edit_count": 1,
+      "last_lines": 30,
+      "last_ts": 1784679812040,
+      "delisted": false,
+      "last_source": "onEdit",
+      "last_content_hash": "2b4f20d7"
+    },
+    "__pycache__/llm_service.cpython-311.pyc": {
+      "ipo_ts": 1784679812043,
+      "edit_count": 1,
+      "last_lines": 125,
+      "last_ts": 1784679812043,
+      "delisted": false,
+      "last_source": "onEdit",
+      "last_content_hash": "4da6ede4"
+    },
+    "tests/conftest.py": {
+      "ipo_ts": 1784679820988,
+      "edit_count": 3,
+      "last_lines": 58,
+      "last_ts": 1784679842021,
+      "delisted": false,
+      "last_source": "onEdit",
+      "last_content_hash": "79f13d3b"
+    },
+    "__pycache__/memory_manager.cpython-311.pyc": {
+      "ipo_ts": 1784679848067,
+      "edit_count": 1,
+      "last_lines": 42,
+      "last_ts": 1784679848067,
+      "delisted": false,
+      "last_source": "onEdit",
+      "last_content_hash": "acd42037"
+    },
+    "__pycache__/message_service.cpython-311.pyc": {
+      "ipo_ts": 1784679848074,
+      "edit_count": 1,
+      "last_lines": 75,
+      "last_ts": 1784679848074,
+      "delisted": false,
+      "last_source": "onEdit",
+      "last_content_hash": "858ac8c"
     }
   }
 }
