@@ -228,6 +228,15 @@
       "delisted": false,
       "last_source": "onEdit",
       "last_content_hash": "42db9055"
+    },
+    "CLAUDE.md": {
+      "ipo_ts": 1784678794253,
+      "edit_count": 1,
+      "last_lines": 113,
+      "last_ts": 1784678794253,
+      "delisted": false,
+      "last_source": "onEdit",
+      "last_content_hash": "17d103bd"
     }
   }
 }
